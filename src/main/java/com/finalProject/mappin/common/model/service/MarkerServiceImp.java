@@ -21,7 +21,7 @@ public class MarkerServiceImp implements MarkerService{
 	}
 	@Override
 	public List<Marker> selectList(int page, int contentType, String keyword) {
-		return null;
+		return markerDao.selectList(page, contentType, keyword);
 	}
 	
 	@Override
@@ -42,6 +42,18 @@ public class MarkerServiceImp implements MarkerService{
 	@Override
 	public int getpage(int contentType) {
 		return markerDao.getpage(contentType);
+	}
+	@Override
+	public int getpage(int contentType, String keyword) {
+		return markerDao.getPage(contentType, keyword);
+	}
+	@Override
+	public List<Marker> selectList(int page, String keyword) {
+		return markerDao.selectList(page, keyword);
+	}
+	@Override
+	public int getpage(String keyword) {
+		return markerDao.getpage(keyword);
 	}
 
 	

@@ -21,7 +21,7 @@
       <br/>
       <div class="row">
          <div class="col-md-8 text-center">
-            <div style="border: 1px solid red; height: 400px">
+            <div style="border: 1px solid black; height: 400px">
                <div class="map_wrap">
                   <div id="map"
                      style="width: 100%; height: 100%; position: relative; overflow: hidden;"></div>
@@ -29,11 +29,11 @@
                      <div class="option">
                         <div>
                            <select id="typeselect">
-                              <option>-</option>
+                              <option value="">-</option>
                               <option value="12">관광지</option>
                               <option value="32">숙박지</option>
                               <option value="39">음식점</option>
-                           </select> 키워드 : <input type="search" value="제주 맛집" id="keyword" size="15">
+                           </select> 키워드 : <input type="search" value="" id="keyword" size="15">
                            <button id="search">검색하기</button>
                         </div>
                      </div>
@@ -252,12 +252,22 @@ daum.maps.event.addListener(map, 'rightclick', function(mouseEvent) {
                
          });
 
-   $(function(){
-      $('#search').click(function(){
-      type=$('#typeselect').val();
-      getInfoList(1,type);
-      });
-   });
+//검색 버튼 이벤트
+$(function(){
+	$('#search').click(function(){
+		type=$('#typeselect').val();
+		keyword=$('#keyword').val();
+		if(type==""){
+			getKeyWordList(1,keyword);
+		}else{
+			if(keyword!=""){
+				getKeyWordTypeList(1,type,keyword);
+			}else{
+				getInfoList(1,type);
+			}
+		}
+	});
+});
    
    //주소,위치 변환 함수
     function searchDetailAddrFromCoords(geocoder,coords, callback) {
@@ -346,7 +356,7 @@ daum.maps.event.addListener(map, 'rightclick', function(mouseEvent) {
       }
       apiMarkers=[];
       $.ajax({
-         url:'test',
+         url:'/mappin/marker/select_List.mark',
          type:'get',
          datatype:'json',
          data:{"page":page,
@@ -395,6 +405,128 @@ daum.maps.event.addListener(map, 'rightclick', function(mouseEvent) {
          }
       });
    }
+   function getKeyWordList(page,keyword){
+	   for(i in apiMarkers){
+			apiMarkers[i].setMap(null);
+		}
+		closeWindow(map,apiWindows);
+		apiMarkers=[];
+		apiWindows=[];
+		$.ajax({
+			url:'/mappin/marker/search_List.mark',
+			type:'get',
+			datatype:'json',
+			data:{"page":page,
+				  "keyword":keyword},
+			success:function(data){
+				$('#placesList').html("");
+				var jsonData = JSON.stringify(data);
+				var jsonArr = JSON.parse(jsonData);
+				for(i in jsonArr.list){
+					var num=Number(i)+Number(1);
+				    var el = document.createElement('li');
+					var content ='<li class="item" id="item_'+num+'">'
+								+'<span class="markerbg marker_'+num+'"></span>'
+								+'<div class="info">';
+								if(jsonArr.list[i].img!=null){
+									content+='<img alt="" src="'+jsonArr.list[i].img+'" style="width:70px;height:70px"/>';
+								}
+								
+						 content+='<h5>'+decodeURI(jsonArr.list[i].title)+'</h5>'
+								+'</div>'
+								+'<div class="jibun">'
+								+'<span>'+jsonArr.list[i].address+'</span>'
+								+'</div>'
+								+'</li>'
+					$('#placesList').html($('#placesList').html()+content);
+						  var infowindow= new daum.maps.InfoWindow({
+					        map:map,
+					        removable:true,
+					        content:content
+					      });
+						  apiWindows.push(infowindow);
+						var apimarker=addmarker(map,new daum.maps.LatLng(jsonArr.list[i].lng,jsonArr.list[i].lat),num);
+						changeView(map,'제주시');
+						displaySearchPagination(jsonArr.page,page,keyword);
+				}//for문 end
+				
+				for(var i=0;i<=jsonArr.length;i++){
+					addCilckEvent(map,apiMarkers[i],apiWindows[i],apiWindows);
+				}
+						$('#placesList').on('click', 'li', function(e) {
+								var index=Number($('li').index(e.currentTarget))-Number(1);
+								if(index<0)
+									index=0;
+								addMenuCilckEvent(map,apiMarkers[index],apiWindows[index],apiWindows);
+							});
+				
+			}//success end
+		});
+   }
+   
+   function getKeyWordTypeList(page,type,keyword){
+		for(i in apiMarkers){
+			apiMarkers[i].setMap(null);
+		}
+		console.log(keyword);
+		closeWindow(map,apiWindows);
+		apiMarkers=[];
+		apiWindows=[];
+		$.ajax({
+			url:'/mappin/marker/search_Type_List.mark',
+			type:'get',
+			datatype:'json',
+			data:{"page":page,
+				  "type":type,
+				  "keyword":keyword},
+			success:function(data){
+				$('#placesList').html("");
+				var jsonData = JSON.stringify(data);
+				var jsonArr = JSON.parse(jsonData);
+				for(i in jsonArr.list){
+					var num=Number(i)+Number(1);
+				    var el = document.createElement('li');
+					var content ='<li class="item" id="item_'+num+'">'
+								+'<span class="markerbg marker_'+num+'"></span>'
+								+'<div class="info">';
+								if(jsonArr.list[i].img!=null){
+									content+='<img alt="" src="'+jsonArr.list[i].img+'" style="width:70px;height:70px"/>';
+								}
+								
+						 content+='<h5>'+decodeURI(jsonArr.list[i].title)+'</h5>'
+								+'</div>'
+								+'<div class="jibun">'
+								+'<span>'+jsonArr.list[i].address+'</span>'
+								+'</div>'
+								+'</li>'
+					$('#placesList').html($('#placesList').html()+content);
+						  var infowindow= new daum.maps.InfoWindow({
+					        map:map,
+					        removable:true,
+					        content:content
+					      });
+						  apiWindows.push(infowindow);
+						var apimarker=addmarker(map,new daum.maps.LatLng(jsonArr.list[i].lng,jsonArr.list[i].lat),num);
+						changeView(map,'제주시');
+						displaySearchTypePagination(jsonArr.page,page,type,keyword);
+				}//for문 end
+				
+				for(var i=0;i<=jsonArr.length;i++){
+					addCilckEvent(map,apiMarkers[i],apiWindows[i],apiWindows);
+				}
+						$('#placesList').on('click', 'li', function(e) {
+								var index=Number($('li').index(e.currentTarget))-Number(1);
+								if(index<0)
+									index=0;
+								addMenuCilckEvent(map,apiMarkers[index],apiWindows[index],apiWindows);
+							});
+				
+			}//success end
+		});
+	}
+   
+   
+   
    function addCilckEvent(map,apimarker,infowindow,apiWindows){
       closeWindow(map,apiWindows);
       daum.maps.event.addListener(apimarker, 'click', function() {
@@ -442,6 +574,143 @@ daum.maps.event.addListener(map, 'rightclick', function(mouseEvent) {
            }
        });
    }
+   
+   
+   
+   
+   function displaySearchPagination(maxpage,page,keyword){
+		var paginationEl = document.getElementById('pagination'),
+	       fragment = document.createDocumentFragment(),
+	       i;
+			var endpage=10,startpage=1;
+			//페이지 처리.
+			for(var j=1;j*10<page+10;j++){
+				endpage=j*10;
+				startpage=j*10-9;
+			}
+			if(endpage>=maxpage){
+				endpage=maxpage;
+			}
+		    // 기존에 추가된 페이지번호를 삭제합니다
+		    while (paginationEl.hasChildNodes()) {
+		        paginationEl.removeChild (paginationEl.lastChild);
+		    }
+		    //페이징 이동 버튼 객체 생성
+		    var stbtn=document.createElement('a');
+		    stbtn.innerHTML='◀';
+		    stbtn.href='#';
+		    var endbtn=document.createElement('a');
+		    endbtn.innerHTML='▶';
+		    endbtn.href='#';
+		    if(startpage==1){
+		    	stbtn.className='on';
+		    }else{
+		    	  stbtn.onclick=(function(){
+		  	    	return function(){
+		  	    		getKeyWordList(startpage-10,keyword);
+		  	    	}
+		  	    })();
+		    }
+		    if(endpage==maxpage){
+		    	endbtn.className='on';
+		    }else{
+		    	 endbtn.onclick=(function(){
+		 	    	return function(){
+		 	    		getKeyWordList(startpage+10,keyword);
+		 	    	}
+		 	    })();
+		    }
+		  
+		   //이전 버튼추가
+		    fragment.appendChild(stbtn);
+		   //시작~끝 페이지 나열
+		    for (i=startpage; i<=endpage; i++) {
+		        var el = document.createElement('a');
+		        el.href = "#";
+		        el.innerHTML = i;
+		        if (i===page) {
+		            el.className = 'on';
+		        } else {
+		        	el.onclick = (function(i) {
+		                return function() {
+		                	getKeyWordList(i,type);
+		                }
+		            })(i);
+		        }
+				
+		        fragment.appendChild(el);
+		    }
+		    //다음버튼 추가
+		    fragment.appendChild(endbtn);
+		    paginationEl.appendChild(fragment);
+   }
+   //카테고리 + 키워드 검색 리턴용 페이지
+   function displaySearchTypePagination(maxpage,page,type,keyword) {
+		var paginationEl = document.getElementById('pagination'),
+       fragment = document.createDocumentFragment(),
+       i;
+		var endpage=10,startpage=1;
+		//페이지 처리.
+		for(var j=1;j*10<page+10;j++){
+			endpage=j*10;
+			startpage=j*10-9;
+		}
+		if(endpage>=maxpage){
+			endpage=maxpage;
+		}
+	    // 기존에 추가된 페이지번호를 삭제합니다
+	    while (paginationEl.hasChildNodes()) {
+	        paginationEl.removeChild (paginationEl.lastChild);
+	    }
+	    //페이징 이동 버튼 객체 생성
+	    var stbtn=document.createElement('a');
+	    stbtn.innerHTML='◀';
+	    stbtn.href='#';
+	    var endbtn=document.createElement('a');
+	    endbtn.innerHTML='▶';
+	    endbtn.href='#';
+	    if(startpage==1){
+	    	stbtn.className='on';
+	    }else{
+	    	  stbtn.onclick=(function(){
+	  	    	return function(){
+	  	    		getKeyWordTypeList(startpage-10,type,keyword);
+	  	    	}
+	  	    })();
+	    }
+	    if(endpage==maxpage){
+	    	endbtn.className='on';
+	    }else{
+	    	 endbtn.onclick=(function(){
+	 	    	return function(){
+	 	    		getKeyWordTypeList(startpage+10,type,keyword);
+	 	    	}
+	 	    })();
+	    }
+	  
+	   //이전 버튼추가
+	    fragment.appendChild(stbtn);
+	   //시작~끝 페이지 나열
+	    for (i=startpage; i<=endpage; i++) {
+	        var el = document.createElement('a');
+	        el.href = "#";
+	        el.innerHTML = i;
+	        if (i===page) {
+	            el.className = 'on';
+	        } else {
+	        	el.onclick = (function(i) {
+	                return function() {
+	                	getKeyWordTypeList(i,type,keyword);
+	                }
+	            })(i);
+	        }
+			
+	        fragment.appendChild(el);
+	    }
+	    //다음버튼 추가
+	    fragment.appendChild(endbtn);
+	    paginationEl.appendChild(fragment);
+	}
 </script>
 </body>
 </html>

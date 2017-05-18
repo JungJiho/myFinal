@@ -14,7 +14,12 @@ public interface MarkerService {
 
 	int delete(Marker marker);
 	
+	List<Marker> selectList(int page, int contentType, String keyword);
+
 	int getpage(int contentType);
 
-	List<Marker> selectList(int page, int contentType, String keyword);
+	int getpage(int contentType, String keyword);
+
+	int getpage(String keyword);
+	List<Marker> selectList(int page, String keyword);
 }
